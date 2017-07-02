@@ -1,8 +1,25 @@
 # coding: utf-8
 
-from flask import request, redirect, url_for, render_template, flash
+from functools import wraps
+from flask import request, redirect, url_for, render_template, flash, abort, jsonify, session, g
 from flaskr import app, db
 from flaskr.models import Entry
+
+def login_required(f):
+    @wraps(f)
+    def decorated_view(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated_view
+
+@app.before_request
+def load_user():
+    user_id = session.get('user_id')
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = User.query.get(session['user_id'])
 
 @app.route('/')
 def show_entries():
@@ -25,6 +42,7 @@ def add_entry():
 #def user_list():
 #    return 'list users'
 @app.route('/users/')
+@login_required
 def user_list():
     users = User.query.all()
     return render_template('user/list.html', users=users)
@@ -33,6 +51,7 @@ def user_list():
 #def user_detail(user_id):
 #    return 'detail user ' + str(user_id)
 @app.route('/users/<int:user_id>/')
+@login_required
 def user_detail(user_id):
     user = User.query.get(user_id)
     return render_template('user/detail.html', user=user)
@@ -41,6 +60,7 @@ def user_detail(user_id):
 #def user_edit(user_id):
 #    return 'edit user ' + str(user_id)
 @app.route('/users/<int:user_id>/edit/', methods=['GET', 'POST'])
+@login_required
 def user_edit(user_id):
     user = User.query.get(user_id)
     if user is None:
@@ -58,6 +78,7 @@ def user_edit(user_id):
 #def user_create():
 #    return 'create a new user'
 @app.route('/users/create/', methods=['GET', 'POST'])
+@login_required
 def user_create():
     if request.method == 'POST':
         user = User(name=request.form['name'],
@@ -100,3 +121,19 @@ def logout():
     session.pop('user_id', None)
     flash('You were logged out')
     return redirect(url_for('show_entries'))
+
+def login_required(f):
+    @wraps(f)
+    def decorated_view(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated_view
+
+@app.before_request
+def load_user():
+    user_id = session.get('user_id')
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = User.query.get(session['user_id'])
