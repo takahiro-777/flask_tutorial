@@ -3,7 +3,7 @@
 from functools import wraps
 from flask import request, redirect, url_for, render_template, flash, abort, jsonify, session, g
 from flaskr import app, db
-from flaskr.models import Entry
+from flaskr.models import Entry, User
 
 def login_required(f):
     @wraps(f)
